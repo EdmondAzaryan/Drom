@@ -164,7 +164,7 @@ header{background:#1c1c1e;color:#fff;display:flex;justify-content:space-between;
             <button class="btn-t btn-dark" onclick="goBack()">Назад</button>
             <span id="det-name">Автомобиль</span>
         </div>
-        <button class="btn-view" onclick="goBack()">👁</button>
+        <button class="btn-view" onclick="goBack()">👁 Посмотреть</button>
     </div>
 
     <div class="detail-layout">
@@ -190,9 +190,7 @@ header{background:#1c1c1e;color:#fff;display:flex;justify-content:space-between;
         <div class="detail-right">
             <div class="spec-row"><span class="spec-label">Владелец</span><span class="spec-value" id="det-seller">-</span></div>
             <div class="spec-row"><span class="spec-label">Гос. стоимость</span><span class="spec-value" style="color:#888" id="det-gov-price">-</span></div>
-            <!-- ГОС НОМЕР ИЗМЕНЕН НА ПРОЧЕРК -->
             <div class="spec-row"><span class="spec-label">Гос. номер</span><span class="spec-value">-</span></div>
-            <!-- ПРОБЕГ ИЗМЕНЕН НА 0 КМ -->
             <div class="spec-row"><span class="spec-label">Пробег</span><span class="spec-value">0 км</span></div>
             <div class="spec-row"><span class="spec-label">Владельцев</span><span class="spec-value">1</span></div>
             <div class="spec-row"><span class="spec-label">Цвет фар</span><span class="spec-value"><div style="width:15px;height:15px;background:#e3f2fd;border-radius:50%"></div></span></div>
@@ -214,7 +212,6 @@ header{background:#1c1c1e;color:#fff;display:flex;justify-content:space-between;
 const tg = window.Telegram.WebApp;
 tg.expand();
 
-// Берем реальное имя из Телеграма, если нет — пишем "Игрок"
 const TG_USER_NAME = tg.initDataUnsafe?.user?.first_name || "Игрок";
 
 const DEFAULT_CARS = {
@@ -228,6 +225,7 @@ const DEFAULT_CARS = {
 };
 const DEF_IMG = "https://cdn-icons-png.flaticon.com/512/3202/3202926.png";
 
+// Логика: если БД дала картинку — берем её. Если пусто — из списка. Если нет и там — иконку.
 function getImg(carName, dbImg) {
     if (dbImg && dbImg.length > 5) return dbImg; 
     return DEFAULT_CARS[carName] || DEF_IMG;     
@@ -235,6 +233,7 @@ function getImg(carName, dbImg) {
 
 const API_URL = "http://127.0.0.1:8000"; 
 const USER_ID = new URLSearchParams(window.location.search).get('uid') || tg.initDataUnsafe?.user?.id || 1;
+const CACHE_BUSTER = new Date().getTime(); 
 
 let allAds = [], myAdsList = [], myCars = [];
 let currentAd = null, sellCar = null, selDaysVal = 1, hist = ['page-main'], carPage = 0;
@@ -243,7 +242,7 @@ let modalMode = 'buy';
 function money(a) { return a.toLocaleString('ru-RU') + '$'; }
 function toast(m) { let t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3000); }
 function updBal() { 
-    fetch(`${API_URL}/api/user_balance?user_id=${USER_ID}`)
+    fetch(`${API_URL}/api/user_balance?user_id=${USER_ID}&v=${CACHE_BUSTER}`)
         .then(res => res.json())
         .then(data => document.getElementById('u-bal').textContent = money(data.balance || 0))
         .catch(() => document.getElementById('u-bal').textContent = "0$");
@@ -262,7 +261,7 @@ function toggleCar() { let tr=document.getElementById('car-top'); if(carPage===0
 function updCarInd() { document.getElementById('car-ind').textContent=(carPage+1)+' / 2'; }
 
 function loadAds() {
-    fetch(`${API_URL}/api/all_ads`)
+    fetch(`${API_URL}/api/all_ads?v=${CACHE_BUSTER}`)
         .then(res => res.json())
         .then(data => { allAds = data; renderMain(); })
         .catch(err => console.error(err));
@@ -302,10 +301,7 @@ function openDetail(id, mode) {
     
     document.getElementById('det-name').textContent = a.name;
     document.getElementById('det-img').src = getImg(a.name, a.image_url);
-    
-    // ВСТАВЛЯЕМ ИМЯ ИЗ ТЕЛЕГРАМА
     document.getElementById('det-seller').textContent = TG_USER_NAME; 
-    
     document.getElementById('det-gov-price').textContent = money(a.price * 0.8); 
     
     function renderBar(barId, txtId, lvl) {
@@ -379,7 +375,7 @@ function openSellMenu() {
     showPage('page-step1');
     let g = document.getElementById('garage-grid');
     g.innerHTML = '<div style="text-align:center; width:100%; padding:20px; color:#888;">Загрузка машин...</div>';
-    fetch(`${API_URL}/api/my_cars?user_id=${USER_ID}`)
+    fetch(`${API_URL}/api/my_cars?user_id=${USER_ID}&v=${CACHE_BUSTER}`)
         .then(res => res.json())
         .then(data => {
             myCars = data; 
@@ -419,7 +415,7 @@ function openMyAds() {
     showPage('page-my');
     let g = document.getElementById('my-grid');
     g.innerHTML = '<div style="grid-column:span 4;text-align:center;padding:20px;color:#888">Загрузка...</div>';
-    fetch(`${API_URL}/api/my_ads?user_id=${USER_ID}`)
+    fetch(`${API_URL}/api/my_ads?user_id=${USER_ID}&v=${CACHE_BUSTER}`)
         .then(res => res.json())
         .then(data => {
             myAdsList = data;

@@ -70,32 +70,38 @@ header{background:#1c1c1e;color:#fff;display:flex;justify-content:space-between;
 .btn-pub{width:100%;padding:14px;background:#d5d7db;color:#999;border:none;border-radius:4px;font-size:15px;font-weight:bold;cursor:not-allowed}
 .btn-pub.ready{background:#e31e24;color:#fff;cursor:pointer}
 
-/* --- ЭКРАН ДЕТАЛЕЙ --- */
+/* --- ЭКРАН ДЕТАЛЕЙ (ИСПРАВЛЕНО ДЛЯ ТЕЛЕФОНА) --- */
 .detail-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}
-.detail-title{font-size:22px;font-weight:600;display:flex;align-items:center;gap:10px}
+.detail-title{font-size:20px;font-weight:600;display:flex;align-items:center;gap:10px}
 .btn-view{background-color:#e31e24;color:white;padding:10px 15px;border-radius:4px;font-weight:600;border:none;cursor:pointer;font-size:12px;display:flex;align-items:center;gap:5px}
-.detail-layout{display:flex;gap:15px;align-items:flex-start}
-@media (max-width: 800px) { .detail-layout { flex-direction: column; } }
-.detail-left{width:45%;display:flex;flex-direction:column;gap:15px}
-@media (max-width: 800px) { .detail-left { width:100%; } }
-.image-card{background:white;border-radius:8px;padding:20px;display:flex;flex-direction:column;align-items:center;position:relative;min-height:200px;justify-content:center}
-.image-card img{width:100%;max-height:150px;object-fit:contain;margin-bottom:20px}
-.date-text{color:#888;font-size:14px;position:absolute;bottom:15px}
-.price-action-card{display:flex;justify-content:space-between;align-items:center;background:transparent}
-.price-info{display:flex;flex-direction:column}
-.price-label{color:#888;font-size:13px;margin-bottom:5px}
-.price-value{color:#e31e24;font-size:20px;font-weight:bold}
-.btn-remove{background-color:#e31e24;color:white;padding:12px 20px;border-radius:4px;font-weight:600;font-size:13px;border:none;cursor:pointer}
-.btn-buy-large{background-color:#e31e24;color:white;padding:12px 20px;border-radius:4px;font-weight:600;font-size:15px;border:none;cursor:pointer;width:100%}
-.detail-right{width:55%;background:white;border-radius:8px;padding:20px}
-@media (max-width: 800px) { .detail-right { width:100%; } }
-.spec-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;font-size:14px}
-.spec-label{color:#888}
-.spec-value{color:#222;font-weight:500}
-.divider{height:1px;background-color:#e0e0e0;margin:10px 0}
-.level-bar-container{display:flex;gap:4px}
-.level-segment{width:25px;height:6px;background-color:#e0e0e0;border-radius:3px}
-.level-segment.filled{background-color:#f1c40f}
+
+/* ТУТ САМОЕ ВАЖНОЕ: Убрали @media, чтобы на телефоне тоже было в 2 колонки */
+.detail-layout { display: flex; flex-direction: row; gap: 10px; align-items: flex-start; }
+
+/* Левая часть (сжимается, но не меньше 40%) */
+.detail-left { width: 40%; display: flex; flex-direction: column; gap: 10px; flex-shrink: 0; }
+.image-card { background: white; border-radius: 6px; padding: 10px; display: flex; flex-direction: column; align-items: center; position: relative; justify-content: center; }
+.image-card img { width: 100%; max-height: 120px; object-fit: contain; margin-bottom: 25px; }
+.date-text { color: #888; font-size: 12px; position: absolute; bottom: 10px; text-align: center; width: 100%; }
+
+.price-action-card { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+.price-info { display: flex; flex-direction: column; }
+.price-label { color: #888; font-size: 11px; margin-bottom: 3px; }
+.price-value { color: #e31e24; font-size: 18px; font-weight: bold; }
+.btn-remove { background-color: #e31e24; color: white; padding: 10px; border-radius: 4px; font-weight: 600; font-size: 12px; border: none; cursor: pointer; width: 100%; }
+.btn-buy-large { background-color: #e31e24; color: white; padding: 10px; border-radius: 4px; font-weight: 600; font-size: 13px; border: none; cursor: pointer; width: 100%; }
+
+/* Правая часть (занимает оставшееся место) */
+.detail-right { flex: 1; background: white; border-radius: 6px; padding: 10px; min-width: 0; }
+.spec-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; font-size: 11px; gap: 5px; }
+.spec-label { color: #888; white-space: nowrap; }
+.spec-value { color: #222; font-weight: 500; text-align: right; word-break: break-word; }
+.divider { height: 1px; background-color: #e0e0e0; margin: 8px 0; }
+
+/* Полоски уровней */
+.level-bar-container { display: flex; gap: 2px; flex-shrink: 0; }
+.level-segment { width: 10px; height: 5px; background-color: #e0e0e0; border-radius: 2px; }
+.level-segment.filled { background-color: #f1c40f; }
 
 /* Уведомления */
 #toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:10px 20px;border-radius:6px;font-weight:bold;opacity:0;pointer-events:none;transition:.3s;z-index:2000;font-size:12px}
@@ -168,7 +174,7 @@ header{background:#1c1c1e;color:#fff;display:flex;justify-content:space-between;
             <button class="btn-t btn-dark" onclick="goBack()">Назад</button>
             <span id="det-name">Автомобиль</span>
         </div>
-        <button class="btn-view" onclick="goBack()">👁 Посмотреть</button>
+        <button class="btn-view" onclick="goBack()">👁</button>
     </div>
 
     <div class="detail-layout">
@@ -183,7 +189,7 @@ header{background:#1c1c1e;color:#fff;display:flex;justify-content:space-between;
                     <span class="price-label">Стоимость на дроме</span>
                     <span class="price-value" id="det-price-own"></span>
                 </div>
-                <button class="btn-remove" onclick="removeMyAd()">Снять с продажи</button>
+                <button class="btn-remove" onclick="removeMyAd()">Снять</button>
             </div>
 
             <div class="price-action-card" id="det-action-buy" style="display:none;">
@@ -201,11 +207,11 @@ header{background:#1c1c1e;color:#fff;display:flex;justify-content:space-between;
             
             <div class="divider"></div>
 
-            <div class="spec-row"><span class="spec-label">Двигатель</span><div style="display:flex;align-items:center;gap:10px"><span id="det-engine-txt" class="spec-value"></span><div class="level-bar-container" id="det-engine-bar"></div></div></div>
-            <div class="spec-row"><span class="spec-label">Турбонаддув</span><div style="display:flex;align-items:center;gap:10px"><span id="det-turbo-txt" class="spec-value"></span><div class="level-bar-container" id="det-turbo-bar"></div></div></div>
-            <div class="spec-row"><span class="spec-label">Гидравлика</span><div style="display:flex;align-items:center;gap:10px"><span id="det-hydro-txt" class="spec-value"></span><div class="level-bar-container" id="det-hydro-bar"></div></div></div>
-            <div class="spec-row"><span class="spec-label">Чип</span><div style="display:flex;align-items:center;gap:10px"><span id="det-chip-txt" class="spec-value"></span><div class="level-bar-container" id="det-chip-bar"></div></div></div>
-            <div class="spec-row"><span class="spec-label">Тормоза</span><div style="display:flex;align-items:center;gap:10px"><span id="det-brakes-txt" class="spec-value"></span><div class="level-bar-container" id="det-brakes-bar"></div></div></div>
+            <div class="spec-row"><span class="spec-label">Двигатель</span><div style="display:flex;align-items:center;gap:5px"><span id="det-engine-txt" class="spec-value"></span><div class="level-bar-container" id="det-engine-bar"></div></div></div>
+            <div class="spec-row"><span class="spec-label">Турбонаддув</span><div style="display:flex;align-items:center;gap:5px"><span id="det-turbo-txt" class="spec-value"></span><div class="level-bar-container" id="det-turbo-bar"></div></div></div>
+            <div class="spec-row"><span class="spec-label">Гидравлика</span><div style="display:flex;align-items:center;gap:5px"><span id="det-hydro-txt" class="spec-value"></span><div class="level-bar-container" id="det-hydro-bar"></div></div></div>
+            <div class="spec-row"><span class="spec-label">Чип</span><div style="display:flex;align-items:center;gap:5px"><span id="det-chip-txt" class="spec-value"></span><div class="level-bar-container" id="det-chip-bar"></div></div></div>
+            <div class="spec-row"><span class="spec-label">Тормоза</span><div style="display:flex;align-items:center;gap:5px"><span id="det-brakes-txt" class="spec-value"></span><div class="level-bar-container" id="det-brakes-bar"></div></div></div>
         </div>
     </div>
 </div>
@@ -217,9 +223,8 @@ const tg = window.Telegram.WebApp;
 tg.expand();
 
 // НАСТРОЙКА КАРТИНОК
-// Чтобы картинка работала, файл должен лежать в том же репозитории, что и index.html
 const DEFAULT_CARS = {
-    "Bugatti Bolide": "bolide.png", // <--- ТУТ ТВОЯ КАРТИНКА (Загрузи bolide.png в репозиторий)
+    "Bugatti Bolide": "bolide.png", 
     "Ferrari 296 GTB": "https://pngimg.com/uploads/ferrari/ferrari_PNG102812.png",
     "BMW M3 G80": "https://pngimg.com/uploads/bmw/bmw_PNG1701.png",
     "McLaren 720s": "https://pngimg.com/uploads/mclaren/mclaren_PNG28.png",
@@ -229,7 +234,6 @@ const DEFAULT_CARS = {
 };
 const DEF_IMG = "https://cdn-icons-png.flaticon.com/512/3202/3202926.png";
 
-// Умная функция: если в базе есть картинка (ты загружал через /setphoto), берем её. Иначе - из списка выше.
 function getImg(carName, dbImg) {
     if (dbImg && dbImg.length > 5) return dbImg; 
     return DEFAULT_CARS[carName] || DEF_IMG;     

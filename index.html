@@ -46,7 +46,7 @@ header{background:#1c1c1e;color:#fff;display:flex;justify-content:space-between;
 .step-head{display:flex;align-items:center;gap:10px;margin-bottom:15px}
 .step-txt{font-size:14px;color:#666}
 .cars-list{display:flex;gap:10px;flex-wrap:wrap}
-.sell-card{background:#fff;border-radius:6px;padding:10px;width:calc(50% - 5px);display:flex;flex-direction:column;align-items:center;border:2px solid transparent}
+.sell-card{background:#fff;border-radius:6px;padding:10px;width:calc(50% - 5px);display:flex;flex-direction:column;align-items:center;border:2px solid transparent;cursor:pointer}
 .sell-card img{height:60px;object-fit:contain;margin-bottom:5px}
 .sell-card .card-title{font-size:12px;width:100%;text-align:left}
 .cfg-block{background:#fff;border-radius:6px;padding:15px;margin-bottom:10px}
@@ -176,6 +176,9 @@ header{background:#1c1c1e;color:#fff;display:flex;justify-content:space-between;
 <div id="toast">Текст</div>
 
 <script>
+const tg = window.Telegram.WebApp;
+tg.expand();
+
 // ⚙️ НАСТРОЙКА КАРТИНОК
 const CAR_IMGS = {
     "Ferrari 296 GTB": "https://pngimg.com/uploads/ferrari/ferrari_PNG102812.png",
@@ -188,16 +191,13 @@ const CAR_IMGS = {
 const DEF_IMG = "https://cdn-icons-png.flaticon.com/512/3202/3202926.png";
 function getImg(name) { return CAR_IMGS[name] || DEF_IMG; }
 
-// ⚠️ ВАЖНО: ССЫЛКА НА ТВОЙ СЕРВЕР (Flask)
-const API_URL = "http://127.0.0.1:8000"; // Если на телефоне, замени 127.0.0.1 на IP ПК
-const USER_ID = new URLSearchParams(window.location.search).get('uid') || "123456789"; 
+// ⚠️ ССЫЛКА НА СЕРВЕР (Если тестируешь на телефоне, замени 127.0.0.1 на IP ПК)
+const API_URL = "http://127.0.0.1:8000"; 
+const USER_ID = new URLSearchParams(window.location.search).get('uid') || tg.initDataUnsafe?.user?.id || 1;
 
-let user = { id: 1, name: "Вы", bal: 5000000 };
+let user = { id: USER_ID, name: "Вы", bal: 5000000 };
+let allAds = []; // Сюда будут грузиться объявления из базы
 let myCars = []; 
-let ads = [
-    { id: 101, s_id: 2, s_name: "Arm_Nemos", car_name: "Ferrari 296 GTB", speed: 400, turbo: 5, engine: 5, tires: 5, stars: 5, price: 40000000 }
-];
-
 let buyAd = null, sellCar = null, selDaysVal = 1, hist = ['page-main'], carPage = 0;
 
 function money(a) { return a.toLocaleString('ru-RU') + '$'; }
@@ -211,15 +211,45 @@ function scrollCar(dir) { let tr=document.getElementById('car-top'); if(dir===1)
 function toggleCar() { let tr=document.getElementById('car-top'); if(carPage===0){carPage=1;tr.scrollLeft=tr.scrollWidth}else{carPage=0;tr.scrollLeft=0} updCarInd(); }
 function updCarInd() { document.getElementById('car-ind').textContent=(carPage+1)+' / 2'; }
 
-// Главная
+// ГЛАВНАЯ: Загрузка объявлений из базы
+function loadAds() {
+    fetch(`${API_URL}/api/all_ads`)
+        .then(res => res.json())
+        .then(data => {
+            allAds = data;
+            renderMain();
+        })
+        .catch(err => {
+            console.error("Ошибка загрузки объявлений:", err);
+            document.getElementById('main-grid').innerHTML = '<div style="grid-column:span 4;text-align:center;padding:20px;color:red;">Ошибка связи с сервером</div>';
+        });
+}
+
 function renderMain() {
-let q=document.getElementById('search-name').value.toLowerCase(), min=parseInt(document.getElementById('f-min').value)||0, max=parseInt(document.getElementById('f-max').value)||Infinity, sort=document.getElementById('sort-sel').value;
-let f=ads.filter(a=>a.car_name.toLowerCase().includes(q)&&a.price>=min&&a.price<=max);
-if(sort==='price_asc')f.sort((a,b)=>a.price-b.price); else f.sort((a,b)=>b.price-a.price);
-document.getElementById('car-top').innerHTML=f.map(a=>`<div class="card" onclick="openBuy(${a.id})"><div class="img-box"><img src="${getImg(a.car_name)}" onerror="this.src='${DEF_IMG}'"></div><div class="price-tag">${money(a.price)}</div><div class="card-title">${a.car_name}</div></div>`).join('');
-carPage=0;updCarInd();document.getElementById('car-top').scrollLeft=0;
-let g=document.getElementById('main-grid');
-g.innerHTML = f.length===0 ? '<div style="grid-column:span 4;text-align:center;padding:20px;color:#888">Ничего не найдено</div>' : f.map(a=>`<div class="card" onclick="openBuy(${a.id})"><div class="img-box"><img src="${getImg(a.car_name)}" onerror="this.src='${DEF_IMG}'"></div><div class="price-tag">${money(a.price)}</div><div class="card-title">${a.car_name}</div></div>`).join('');
+    let q=document.getElementById('search-name').value.toLowerCase(), min=parseInt(document.getElementById('f-min').value)||0, max=parseInt(document.getElementById('f-max').value)||Infinity, sort=document.getElementById('sort-sel').value;
+    
+    // Фильтруем объявления из базы
+    let f = allAds.filter(a => a.name.toLowerCase().includes(q) && a.price >= min && a.price <= max);
+    if(sort==='price_asc') f.sort((a,b)=>a.price-b.price); else f.sort((a,b)=>b.price-a.price);
+    
+    document.getElementById('car-top').innerHTML = f.map(a => `
+        <div class="card" onclick="openBuy(${a.id})">
+            <div class="img-box"><img src="${getImg(a.name)}" onerror="this.src='${DEF_IMG}'"></div>
+            <div class="price-tag">${money(a.price)}</div>
+            <div class="card-title">${a.name}</div>
+        </div>
+    `).join('');
+    
+    carPage=0; updCarInd(); document.getElementById('car-top').scrollLeft=0;
+    
+    let g = document.getElementById('main-grid');
+    g.innerHTML = f.length===0 ? '<div style="grid-column:span 4;text-align:center;padding:20px;color:#888">Объявлений пока нет</div>' : f.map(a => `
+        <div class="card" onclick="openBuy(${a.id})">
+            <div class="img-box"><img src="${getImg(a.name)}" onerror="this.src='${DEF_IMG}'"></div>
+            <div class="price-tag">${money(a.price)}</div>
+            <div class="card-title">${a.name}</div>
+        </div>
+    `).join('');
 }
 
 // Фильтр
@@ -229,15 +259,30 @@ function applyFilter() { document.getElementById('f-min').value=document.getElem
 
 // Покупка
 function openBuy(id) {
-let a=ads.find(x=>x.id===id);if(!a)return;buyAd=a;
-document.getElementById('m-img').src=getImg(a.car_name);document.getElementById('m-title').textContent=a.car_name;document.getElementById('m-seller').textContent=a.s_name;document.getElementById('m-stars').textContent=a.stars;document.getElementById('m-speed').textContent=a.speed;document.getElementById('m-turbo').textContent=a.turbo;document.getElementById('m-engine').textContent=a.engine;document.getElementById('m-price').textContent=money(a.price);
-let b=document.getElementById('m-buy-btn');if(a.s_id===user.id){b.textContent="Ваше";b.disabled=true;b.style.background="#ccc"}else{b.textContent="💸 Купить";b.disabled=false;b.style.background="#e31e24"}
-document.getElementById('modal-buy').style.display='flex';
+    let a = allAds.find(x => x.id === id);
+    if(!a) return; 
+    buyAd = a;
+    document.getElementById('m-img').src=getImg(a.name);
+    document.getElementById('m-title').textContent=a.name;
+    document.getElementById('m-seller').textContent=a.seller_name;
+    document.getElementById('m-stars').textContent=a.stars;
+    document.getElementById('m-speed').textContent=a.speed;
+    document.getElementById('m-turbo').textContent=a.turbo;
+    document.getElementById('m-engine').textContent=a.engine;
+    document.getElementById('m-price').textContent=money(a.price);
+    
+    let b = document.getElementById('m-buy-btn');
+    if(a.seller_id === user.id) {
+        b.textContent="Ваше"; b.disabled=true; b.style.background="#ccc";
+    } else {
+        b.textContent="💸 Купить"; b.disabled=false; b.style.background="#e31e24";
+    }
+    document.getElementById('modal-buy').style.display='flex';
 }
 function closeBuyModal() { document.getElementById('modal-buy').style.display='none'; }
-function buyCar() { if(!buyAd)return; if(user.bal<buyAd.price){toast("❌ Мало денег!");return} user.bal-=buyAd.price; ads=ads.filter(a=>a.id!==buyAd.id); updBal();closeBuyModal();renderMain();toast("✅ Куплено!"); }
+function buyCar() { toast("Покупка в разработке..."); closeBuyModal(); }
 
-// Подача (Запрос к серверу)
+// ПОДАЧА
 function openSellMenu() {
     showPage('page-step1');
     let g = document.getElementById('garage-grid');
@@ -271,8 +316,8 @@ function updPrice(d) { let c=d*5000;document.getElementById('days-cost').textCon
 function checkPrice() { let p=parseInt(document.getElementById('sell-price').value)||0,b=document.getElementById('pub-btn');if(p>0){b.classList.add('ready');b.disabled=false}else{b.classList.remove('ready');b.disabled=true} }
 
 function confirmPub() { 
-    let p=parseInt(document.getElementById('sell-price').value)||0;
-    if(p<=0)return;
+    let p = parseInt(document.getElementById('sell-price').value) || 0;
+    if(p <= 0) return;
     
     fetch(`${API_URL}/api/sell_car`, {
         method: 'POST',
@@ -281,22 +326,22 @@ function confirmPub() {
     })
     .then(res => res.json())
     .then(data => {
-        toast("✅ Объявление отправлено!");
-        showPage('page-main'); 
+        toast("✅ Объявление создано!");
+        showPage('page-main');
+        loadAds(); // <--- ВАЖНО: Сразу перезагружаем объявления на главной!
     })
     .catch(err => {
         toast("❌ Ошибка при создании");
     });
 }
 
-// Мои
 function openMyAds() {
-    let g=document.getElementById('my-grid'),t=document.getElementById('my-text');
-    t.style.display='block'; t.textContent='У вас нет объявлений'; g.innerHTML='';
     showPage('page-my');
 }
 
-updBal();renderMain();
+// Запускаем загрузку объявлений при старте
+updBal();
+loadAds(); 
 </script>
 </body>
 </html>

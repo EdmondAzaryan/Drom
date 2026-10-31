@@ -196,7 +196,7 @@ const API_URL = "http://127.0.0.1:8000";
 const USER_ID = new URLSearchParams(window.location.search).get('uid') || tg.initDataUnsafe?.user?.id || 1;
 
 let user = { id: USER_ID, name: "Вы", bal: 5000000 };
-let allAds = []; // Сюда будут грузиться объявления из базы
+let allAds = []; 
 let myCars = []; 
 let buyAd = null, sellCar = null, selDaysVal = 1, hist = ['page-main'], carPage = 0;
 
@@ -211,7 +211,7 @@ function scrollCar(dir) { let tr=document.getElementById('car-top'); if(dir===1)
 function toggleCar() { let tr=document.getElementById('car-top'); if(carPage===0){carPage=1;tr.scrollLeft=tr.scrollWidth}else{carPage=0;tr.scrollLeft=0} updCarInd(); }
 function updCarInd() { document.getElementById('car-ind').textContent=(carPage+1)+' / 2'; }
 
-// ГЛАВНАЯ: Загрузка объявлений из базы
+// ГЛАВНАЯ
 function loadAds() {
     fetch(`${API_URL}/api/all_ads`)
         .then(res => res.json())
@@ -219,16 +219,11 @@ function loadAds() {
             allAds = data;
             renderMain();
         })
-        .catch(err => {
-            console.error("Ошибка загрузки объявлений:", err);
-            document.getElementById('main-grid').innerHTML = '<div style="grid-column:span 4;text-align:center;padding:20px;color:red;">Ошибка связи с сервером</div>';
-        });
+        .catch(err => console.error("Ошибка:", err));
 }
 
 function renderMain() {
     let q=document.getElementById('search-name').value.toLowerCase(), min=parseInt(document.getElementById('f-min').value)||0, max=parseInt(document.getElementById('f-max').value)||Infinity, sort=document.getElementById('sort-sel').value;
-    
-    // Фильтруем объявления из базы
     let f = allAds.filter(a => a.name.toLowerCase().includes(q) && a.price >= min && a.price <= max);
     if(sort==='price_asc') f.sort((a,b)=>a.price-b.price); else f.sort((a,b)=>b.price-a.price);
     
@@ -252,12 +247,12 @@ function renderMain() {
     `).join('');
 }
 
-// Фильтр
+// ФИЛЬТР
 function openFilterModal() { document.getElementById('m-min').value=document.getElementById('f-min').value||'';document.getElementById('m-max').value=document.getElementById('f-max').value||'';document.getElementById('modal-filter').style.display='flex'; }
 function closeFilterModal() { document.getElementById('modal-filter').style.display='none'; }
 function applyFilter() { document.getElementById('f-min').value=document.getElementById('m-min').value;document.getElementById('f-max').value=document.getElementById('m-max').value;closeFilterModal();renderMain(); }
 
-// Покупка
+// ПОКУПКА
 function openBuy(id) {
     let a = allAds.find(x => x.id === id);
     if(!a) return; 
@@ -272,11 +267,8 @@ function openBuy(id) {
     document.getElementById('m-price').textContent=money(a.price);
     
     let b = document.getElementById('m-buy-btn');
-    if(a.seller_id === user.id) {
-        b.textContent="Ваше"; b.disabled=true; b.style.background="#ccc";
-    } else {
-        b.textContent="💸 Купить"; b.disabled=false; b.style.background="#e31e24";
-    }
+    if(a.seller_id === user.id) { b.textContent="Ваше"; b.disabled=true; b.style.background="#ccc"; }
+    else { b.textContent="💸 Купить"; b.disabled=false; b.style.background="#e31e24"; }
     document.getElementById('modal-buy').style.display='flex';
 }
 function closeBuyModal() { document.getElementById('modal-buy').style.display='none'; }
@@ -306,7 +298,6 @@ function openSellMenu() {
         })
         .catch(err => {
             g.innerHTML = '<div style="text-align:center; width:100%; padding:20px; color:red;">Ошибка подключения к серверу</div>';
-            console.error(err);
         });
 }
 
@@ -328,18 +319,46 @@ function confirmPub() {
     .then(data => {
         toast("✅ Объявление создано!");
         showPage('page-main');
-        loadAds(); // <--- ВАЖНО: Сразу перезагружаем объявления на главной!
+        loadAds();
     })
     .catch(err => {
         toast("❌ Ошибка при создании");
     });
 }
 
+// МОИ ОБЪЯВЛЕНИЯ (Только твои!)
 function openMyAds() {
     showPage('page-my');
+    let g = document.getElementById('my-grid');
+    let t = document.getElementById('my-text');
+    
+    g.innerHTML = ''; 
+    t.style.display = 'block'; 
+    t.textContent = 'Загрузка...';
+    
+    fetch(`${API_URL}/api/my_ads?user_id=${USER_ID}`)
+        .then(res => res.json())
+        .then(data => {
+            if(data.length === 0) {
+                t.textContent = 'У вас нет активных объявлений';
+            } else {
+                t.style.display = 'none';
+                g.innerHTML = data.map(a => `
+                    <div class="card">
+                        <div class="img-box"><img src="${getImg(a.name)}" onerror="this.src='${DEF_IMG}'"></div>
+                        <div class="price-tag">${money(a.price)}</div>
+                        <div class="card-title">${a.name}</div>
+                    </div>
+                `).join('');
+            }
+        })
+        .catch(err => {
+            t.textContent = 'Ошибка загрузки';
+            console.error(err);
+        });
 }
 
-// Запускаем загрузку объявлений при старте
+// Запуск
 updBal();
 loadAds(); 
 </script>

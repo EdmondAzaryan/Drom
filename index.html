@@ -56,7 +56,7 @@ header{background:#1c1c1e;color:#fff;display:flex;justify-content:space-between;
 <div class="h-right">
 <div class="bal"><div class="bal-amt" id="u-bal">5 000 000$</div><div class="bal-lbl">БАЛАНС</div></div>
 <button class="btn-t btn-dark" onclick="showPage('page-my')">📄 Мои</button>
-<button class="btn-t btn-red" onclick="requestGarage()">➕ Подать</button>
+<button class="btn-t btn-red" onclick="openSellMenu()">➕ Подать</button>
 </div>
 </header>
 
@@ -92,6 +92,15 @@ header{background:#1c1c1e;color:#fff;display:flex;justify-content:space-between;
 const tg = window.Telegram.WebApp;
 tg.expand();
 
+// Берем ID из ссылки, как в примере 2048
+const urlParams = new URLSearchParams(window.location.search);
+const USER_ID = parseInt(urlParams.get('uid')) || tg.initDataUnsafe?.user?.id || 1;
+
+// Ссылка на наш локальный сервер (Flask)
+// Если тестируешь на телефоне, замени 127.0.0.1 на IP компьютера (напр. 192.168.1.5)
+const SERVER_URL = "http://127.0.0.1:8000"; 
+
+let myCars = []; 
 let sellCar = null, selDaysVal = 1, hist = ['page-main'];
 
 function money(a) { return a.toLocaleString('ru-RU') + '$'; }
@@ -99,36 +108,31 @@ function toast(m) { let t = document.getElementById('toast'); t.textContent = m;
 function showPage(id) { document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); document.getElementById(id).classList.add('active'); if(hist[hist.length-1]!==id) hist.push(id); document.getElementById('h-back').style.display = id==='page-main'?'none':'block'; window.scrollTo(0,0); }
 function goBack() { if(hist.length>1){ hist.pop(); let prev=hist[hist.length-1]; document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); document.getElementById(prev).classList.add('active'); document.getElementById('h-back').style.display=prev==='page-main'?'none':'block'; } else showPage('page-main'); }
 
-// Отправка сигнала боту (закроет приложение, бот пришлет кнопку)
-function requestGarage() {
-    tg.sendData(JSON.stringify({ action: "get_garage" }));
-}
-
-// ПРОВЕРКА ССЫЛКИ: если бот прислал данные, рисуем машины
-function checkUrlParams() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const garageDataStr = urlParams.get('garage');
+// ЗАГРУЗКА МАШИН ИЗ БАЗЫ (ТОЧНО КАК В 2048)
+function openSellMenu() {
+    showPage('page-step1');
+    let g = document.getElementById('garage-grid');
+    g.innerHTML = '<div style="text-align:center; width:100%; padding:20px; color:#888;">Загрузка из базы...</div>';
     
-    if (garageDataStr) {
-        try {
-            const cars = JSON.parse(decodeURIComponent(garageDataStr));
-            let g = document.getElementById('garage-grid');
-            
-            if(cars.length === 0) {
+    fetch(`${SERVER_URL}/api/my_cars?user_id=${USER_ID}`)
+        .then(res => res.json())
+        .then(data => {
+            myCars = data; 
+            if(myCars.length === 0) {
                 g.innerHTML = '<div style="text-align:center; width:100%; padding:20px; color:#888;">У вас нет машин</div>';
-            } else {
-                g.innerHTML = cars.map(c => `
-                    <div class="sell-card" onclick="startSell('${c.name}')">
-                        <img src="https://w7.pngwing.com/pngs/344/457/png-transparent-mercedes-benz-w124-mercedes-benz-w201-car-mercedes-benz-c-class-mercedes-compact-car-sedan-car.png">
-                        <div class="card-title">${c.name}</div>
-                        <div style="font-size:10px; color:#888; align-self:flex-start;">⚡ ${c.speed} км/ч · ⭐ ${c.stars}</div>
-                    </div>
-                `).join('');
+                return;
             }
-            showPage('page-step1');
-            window.history.replaceState({}, document.title, window.location.pathname);
-        } catch(e) { console.error("Ошибка:", e); }
-    }
+            g.innerHTML = myCars.map(c => `
+                <div class="sell-card" onclick="startSell('${c.name}')">
+                    <img src="https://w7.pngwing.com/pngs/344/457/png-transparent-mercedes-benz-w124-mercedes-benz-w201-car-mercedes-benz-c-class-mercedes-compact-car-sedan-car.png">
+                    <div class="card-title">${c.name}</div>
+                    <div style="font-size:10px; color:#888; align-self:flex-start;">⚡ ${c.speed} км/ч · ⭐ ${c.stars}</div>
+                </div>
+            `).join('');
+        })
+        .catch(err => {
+            g.innerHTML = '<div style="text-align:center; width:100%; padding:20px; color:red;">Ошибка сети. Проверь IP сервера.</div>';
+        });
 }
 
 function startSell(name) { sellCar=name;selDaysVal=1;document.querySelectorAll('.day-btn').forEach((b,i)=>{if(i===0)b.classList.add('active');else b.classList.remove('active')});updPrice(1);document.getElementById('sell-price').value='0';document.getElementById('pub-btn').classList.remove('ready');showPage('page-step2'); }
@@ -139,10 +143,21 @@ function checkPrice() { let p=parseInt(document.getElementById('sell-price').val
 function confirmPub() { 
     let p=parseInt(document.getElementById('sell-price').value)||0;
     if(p<=0)return;
-    tg.sendData(JSON.stringify({ action: "sell_car", car_name: sellCar, price: p, days: selDaysVal }));
+    
+    fetch(`${SERVER_URL}/api/sell_car`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: USER_ID, car_name: sellCar, price: p, days: selDaysVal })
+    })
+    .then(res => res.json())
+    .then(data => {
+        toast("✅ Объявление создано!");
+        showPage('page-main');
+    })
+    .catch(err => {
+        toast("❌ Ошибка при создании");
+    });
 }
-
-checkUrlParams();
 </script>
 </body>
 </html>

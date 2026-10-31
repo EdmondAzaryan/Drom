@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Grand Auto</title>
+<style>
+/* Тут все те же стили, что были в предыдущем сообщении, они не меняются */
+*{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
+body{background:#eaebef;color:#333;font-size:13px;overflow-x:hidden;width:100%}
+header{background:#1c1c1e;color:#fff;display:flex;justify-content:space-between;align-items:center;padding:8px 10px;height:55px;position:sticky;top:0;z-index:100}
+.h-left{display:flex;align-items:center;gap:10px}
+.back-btn{color:#3b99fc;font-weight:bold;cursor:pointer;background:none;border:none;font-size:12px;display:none}
+.logo{display:flex;align-items:center;gap:5px;font-size:18px;font-weight:800}
+.logo-ic{background:#e31e24;color:#fff;width:22px;height:22px;border-radius:50%;display:flex;justify-content:center;align-items:center;font-size:12px;font-style:italic}
+.logo span{color:#e31e24}
+.h-right{display:flex;align-items:center;gap:8px}
+.bal{text-align:right;line-height:1.1;margin-right:5px}
+.bal-amt{font-size:14px;font-weight:bold}
+.bal-lbl{font-size:9px;color:#e31e24;font-weight:bold}
+.btn-t{padding:7px 10px;border-radius:4px;border:none;font-weight:600;font-size:11px;display:flex;align-items:center;gap:5px;cursor:pointer}
+.btn-dark{background:#4a4a4a;color:#fff}
+.btn-red{background:#e31e24;color:#fff}
+.container{padding:10px;width:100%;max-width:1200px;margin:0 auto}
+.page{display:none}.page.active{display:block}
+.s-panel{display:flex;gap:5px;margin-bottom:10px}
+.s-box{flex:1;display:flex;align-items:center;background:#d5d7db;border-radius:4px;padding:0 8px}
+.s-box input{width:100%;background:transparent;border:none;padding:10px 0;font-size:12px;outline:none}
+.p-box{flex:1;display:flex;align-items:center;justify-content:center;background:#d5d7db;border-radius:4px;padding:0 5px;gap:5px;cursor:pointer}
+.p-box span{color:#555;font-size:10px}
+.p-box input{width:40px;background:transparent;border:none;padding:10px 0;font-size:11px;text-align:center;outline:none;pointer-events:none}
+.sort-box{flex:1;display:flex;align-items:center;background:#d5d7db;border-radius:4px;padding:0 8px}
+.sort-box select{width:100%;background:transparent;border:none;padding:10px 0;font-size:11px;outline:none;appearance:none}
+.carousel{background:#fceea8;border-radius:6px;padding:8px;display:flex;align-items:center;gap:5px;margin-bottom:20px;position:relative}
+.c-btn{background:#fff5cc;border:none;border-radius:4px;width:25px;height:100px;font-size:16px;color:#333;cursor:pointer;display:flex;justify-content:center;align-items:center;z-index:2;flex-shrink:0}
+.c-track{display:flex;gap:5px;overflow-x:auto;scroll-behavior:smooth;scrollbar-width:none;flex:1;padding-bottom:5px}
+.c-track::-webkit-scrollbar{display:none}
+.c-track .card{min-width:120px;max-width:120px}
+.page-ind{position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);background:#fceea8;padding:2px 10px;border-radius:10px;font-size:10px;font-weight:bold;color:#555;border:1px solid #e5d48f;cursor:pointer;z-index:2}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
+.card{background:#fff;border-radius:6px;padding:8px;display:flex;flex-direction:column;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.05)}
+.img-box{height:45px;display:flex;justify-content:center;align-items:center;margin-bottom:5px}
+.img-box img{max-height:100%;max-width:100%;object-fit:contain}
+.price-tag{background:#e31e24;color:#fff;font-weight:bold;font-size:9px;padding:2px 5px;border-radius:3px;align-self:flex-start;margin-bottom:4px;white-space:nowrap}
+.card-title{font-size:10px;font-weight:600;color:#222;line-height:1.2;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.step-head{display:flex;align-items:center;gap:10px;margin-bottom:15px}
+.step-txt{font-size:14px;color:#666}
+.cars-list{display:flex;gap:10px;flex-wrap:wrap}
+.sell-card{background:#fff;border-radius:6px;padding:10px;width:calc(50% - 5px);display:flex;flex-direction:column;align-items:center;border:2px solid transparent}
+.sell-card img{height:60px;object-fit:contain;margin-bottom:5px}
+.sell-card .card-title{font-size:12px;width:100%;text-align:left}
+.cfg-block{background:#fff;border-radius:6px;padding:15px;margin-bottom:10px}
+.cfg-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.cfg-lbl{font-size:13px;font-weight:600;display:flex;align-items:center;gap:5px}
+.check{color:#e31e24;font-size:16px}
+.cfg-cost{color:#999;font-weight:bold;font-size:14px}
+.days-grp{display:flex;gap:5px}
+.day-btn{width:35px;height:35px;border:none;border-radius:4px;background:#e5e5e5;font-weight:bold;font-size:12px;color:#555;cursor:pointer}
+.day-btn.active{background:#e31e24;color:#fff}
+.price-inp{width:100%;padding:12px;background:#d5d7db;border:none;border-radius:4px;font-size:14px;outline:none;text-align:right}
+.total-row{display:flex;justify-content:space-between;align-items:center;margin:15px 0;font-size:14px;color:#555}
+.total-row strong{color:#000;font-size:18px}
+.btn-pub{width:100%;padding:14px;background:#d5d7db;color:#999;border:none;border-radius:4px;font-size:15px;font-weight:bold;cursor:not-allowed}
+.btn-pub.ready{background:#e31e24;color:#fff;cursor:pointer}
+.modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.9);z-index:1000;display:none;flex-direction:column;align-items:center;justify-content:center;padding:20px}
+.m-filter{width:100%;max-width:400px;display:flex;flex-direction:column;gap:15px}
+.m-row{display:flex;align-items:center;justify-content:center;gap:10px}
+.m-row span{color:#888;font-size:14px;width:60px}
+.m-row input{flex:1;padding:12px;background:#e0e0e0;border:none;border-radius:4px;font-size:14px;outline:none}
+.m-save{width:100%;padding:14px;background:#e31e24;color:#fff;border:none;border-radius:4px;font-weight:bold;font-size:15px;margin-top:20px;cursor:pointer}
+#modal-buy{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.8);z-index:1000;display:none;justify-content:center;align-items:center;padding:15px}
+.buy-content{background:#fff;padding:20px;border-radius:8px;width:100%;max-width:350px}
+.buy-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:15px 0;background:#f0f0f0;padding:10px;border-radius:6px;font-size:12px}
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:10px 20px;border-radius:6px;font-weight:bold;opacity:0;pointer-events:none;transition:.3s;z-index:2000;font-size:12px}
+#toast.show{opacity:1;bottom:30px}
+</style>
+</head>
+<body>
+
+<header>
+<div class="h-left">
+<button class="back-btn" id="h-back" onclick="goBack()">‹ Назад</button>
+<div class="logo"><div class="logo-ic">e</div><div>grand<span>auto</span></div></div>
+</div>
+<div class="h-right">
+<div class="bal"><div class="bal-amt" id="u-bal">5 000 000$</div><div class="bal-lbl">БАЛАНС</div></div>
+<button class="btn-t btn-dark" onclick="openMyAds()">📄 Мои</button>
+<button class="btn-t btn-red" onclick="openSellMenu()">➕ Подать</button>
+</div>
+</header>
+
+<div id="page-main" class="container page active">
+<div class="s-panel">
+<div class="s-box"><span>🔍</span><input type="text" id="search-name" placeholder="Поиск" oninput="renderMain()"></div>
+<div class="p-box" onclick="openFilterModal()"><span>Цена от</span><input type="number" id="f-min" placeholder="0" readonly><span>до</span><input type="number" id="f-max" placeholder="0" readonly></div>
+<div class="sort-box"><select id="sort-sel" onchange="renderMain()"><option value="default">По убыванию</option><option value="price_asc">По возрастанию</option></select></div>
+</div>
+<div class="carousel">
+<button class="c-btn" onclick="scrollCar(-1)">‹</button>
+<div class="c-track" id="car-top"></div>
+<button class="c-btn" onclick="scrollCar(1)">›</button>
+<div class="page-ind" id="car-ind" onclick="toggleCar()">1 / 2</div>
+</div>
+<div class="grid" id="main-grid"></div>
+</div>
+
+<div id="page-my" class="container page">
+<div class="s-panel">
+<div class="s-box"><span>🔍</span><input type="text" placeholder="Поиск"></div>
+<div class="p-box"><span>Цена от</span><input type="number" placeholder="0"><span>до</span><input type="number" placeholder="0"></div>
+<div class="sort-box"><select><option>По возрастанию</option></select></div>
+</div>
+<div class="carousel" style="min-height:120px;justify-content:center">
+<button class="c-btn" style="height:120px">‹</button>
+<div style="flex:1;text-align:center;color:#666;font-size:14px;font-weight:bold" id="my-text">У вас нет объявлений</div>
+<button class="c-btn" style="height:120px">›</button>
+<div class="page-ind">1 / 1</div>
+</div>
+<div class="grid" id="my-grid"></div>
+</div>
+
+<div id="page-step1" class="container page">
+<div class="step-head"><button class="btn-t btn-dark" onclick="goBack()">Назад</button><div class="step-txt"><b>Шаг 1/2</b><br>Выберите автомобиль из гаража</div></div>
+<div class="cars-list" id="garage-grid">
+    <!-- Сюда будут загружаться машины с сервера -->
+    <div style="text-align:center; width:100%; padding:20px; color:#888;">Загрузка машин...</div>
+</div>
+</div>
+
+<div id="page-step2" class="container page">
+<div class="step-head"><button class="btn-t btn-dark" onclick="showPage('page-step1')">Назад</button><div class="step-txt"><b>Шаг 2/2</b><br>Настройте детали</div></div>
+<div class="cfg-block">
+<div class="cfg-row">
+<div class="cfg-lbl"><span class="check">✔</span> Срок размещения</div>
+<div class="days-grp">
+<button class="day-btn active" onclick="selDays(this,1)">1</button>
+<button class="day-btn" onclick="selDays(this,2)">2</button>
+<button class="day-btn" onclick="selDays(this,3)">3</button>
+</div>
+</div>
+<div class="cfg-row" style="justify-content:flex-end"><span class="cfg-cost" id="days-cost">+5 000$</span></div>
+</div>
+<div class="cfg-block">
+<div class="cfg-lbl" style="font-weight:400;margin-bottom:10px">Цена продажи</div>
+<input type="number" class="price-inp" id="sell-price" value="0" placeholder="0" oninput="checkPrice()">
+</div>
+<div class="total-row">К оплате <strong id="total-cost">5 000$</strong></div>
+<button class="btn-pub" id="pub-btn" onclick="confirmPub()">Опубликовать</button>
+</div>
+
+<div id="modal-filter" class="modal">
+<button class="btn-t btn-dark" style="position:absolute;top:20px;left:20px" onclick="closeFilterModal()">Назад</button>
+<div class="m-filter">
+<div class="m-row"><span>Цена от</span><input type="number" id="m-min" placeholder="0"></div>
+<div class="m-row"><span>Цена до</span><input type="number" id="m-max" placeholder="200 000 000"></div>
+<button class="m-save" onclick="applyFilter()">Сохранить</button>
+</div>
+</div>
+
+<div id="modal-buy">
+<div class="buy-content">
+<div style="text-align:center;margin-bottom:10px"><img id="m-img" src="" style="height:80px;object-fit:contain"></div>
+<h2 id="m-title" style="font-size:16px;margin-bottom:5px">Авто</h2>
+<p style="color:#666;font-size:11px">👤 <span id="m-seller"></span></p>
+<div class="buy-stats">
+<div>⭐ Звезды: <b id="m-stars"></b></div>
+<div>⚡ Скорость: <b id="m-speed"></b></div>
+<div>🔧 Турбо: <b id="m-turbo"></b></div>
+<div>⚙ Двиг: <b id="m-engine"></b></div>
+</div>
+<h3 style="color:#e31e24;font-size:20px;margin-bottom:15px" id="m-price">0$</h3>
+<button class="btn-t btn-red" style="width:100%;justify-content:center;padding:12px;font-size:14px" id="m-buy-btn" onclick="buyCar()">💸 Купить</button>
+<button class="btn-t btn-dark" style="width:100%;justify-content:center;margin-top:8px;padding:12px" onclick="closeBuyModal()">Закрыть</button>
+</div>
+</div>
+
+<div id="toast">Текст</div>
+
+<script>
+// ⚙️ НАСТРОЙКА КАРТИНОК (ВСТАВЛЯЙТЕ СВОИ ССЫЛКИ СЮДА)
+const CAR_IMGS = {
+    "Ferrari 296 GTB": "https://pngimg.com/uploads/ferrari/ferrari_PNG102812.png",
+    "BMW M3 G80": "https://pngimg.com/uploads/bmw/bmw_PNG1701.png",
+    "McLaren 720s": "https://pngimg.com/uploads/mclaren/mclaren_PNG28.png",
+    "Mercedes AMG GT": "https://pngimg.com/uploads/mercedes/mercedes_PNG1806.png",
+    "Mercedes W124": "https://pngimg.com/uploads/mercedes/mercedes_PNG1808.png",
+    "Magnaris 2107": "https://pngimg.com/uploads/lada/lada_PNG27.png"
+};
+const DEF_IMG = "https://cdn-icons-png.flaticon.com/512/3202/3202926.png";
+function getImg(name) { return CAR_IMGS[name] || DEF_IMG; }
+
+// ⚠️ ВАЖНО: Здесь указываем данные игрока. 
+// В реальном ТГ Мини Апп эти данные берется из Telegram.WebApp.initDataUnsafe.user.id
+// Для теста мы просто задаем ID игрока вручную.
+const USER_ID = "123456789"; // <-- ЗАМЕНИТЕ НА ВАШ ID ИЗ БОТА
+const API_URL = "http://127.0.0.1:5000"; // <-- Адрес вашего Python-сервера
+
+let user = { id: 1, name: "Вы", bal: 5000000 };
+let myCars = []; // Сюда загрузятся машины из БД
+let ads = [
+    { id: 101, s_id: 2, s_name: "Arm_Nemos", car_name: "Ferrari 296 GTB", speed: 400, turbo: 5, engine: 5, tires: 5, stars: 5, price: 40000000 }
+];
+
+let buyAd = null, sellCar = null, selDaysVal = 1, hist = ['page-main'], carPage = 0;
+
+function money(a) { return a.toLocaleString('ru-RU') + '$'; }
+function toast(m) { let t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3000); }
+function updBal() { document.getElementById('u-bal').textContent = money(user.bal); }
+function showPage(id) { document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); document.getElementById(id).classList.add('active'); if(hist[hist.length-1]!==id) hist.push(id); document.getElementById('h-back').style.display = id==='page-main'?'none':'block'; window.scrollTo(0,0); }
+function goBack() { if(hist.length>1){ hist.pop(); let prev=hist[hist.length-1]; document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); document.getElementById(prev).classList.add('active'); document.getElementById('h-back').style.display=prev==='page-main'?'none':'block'; } else showPage('page-main'); }
+
+// Карусель
+function scrollCar(dir) { let tr=document.getElementById('car-top'); if(dir===1){carPage=1;tr.scrollLeft=tr.scrollWidth}else{carPage=0;tr.scrollLeft=0} updCarInd(); }
+function toggleCar() { let tr=document.getElementById('car-top'); if(carPage===0){carPage=1;tr.scrollLeft=tr.scrollWidth}else{carPage=0;tr.scrollLeft=0} updCarInd(); }
+function updCarInd() { document.getElementById('car-ind').textContent=(carPage+1)+' / 2'; }
+
+// Главная
+function renderMain() {
+let q=document.getElementById('search-name').value.toLowerCase(), min=parseInt(document.getElementById('f-min').value)||0, max=parseInt(document.getElementById('f-max').value)||Infinity, sort=document.getElementById('sort-sel').value;
+let f=ads.filter(a=>a.car_name.toLowerCase().includes(q)&&a.price>=min&&a.price<=max);
+if(sort==='price_asc')f.sort((a,b)=>a.price-b.price); else f.sort((a,b)=>b.price-a.price);
+document.getElementById('car-top').innerHTML=f.map(a=>`<div class="card" onclick="openBuy(${a.id})"><div class="img-box"><img src="${getImg(a.car_name)}" onerror="this.src='${DEF_IMG}'"></div><div class="price-tag">${money(a.price)}</div><div class="card-title">${a.car_name}</div></div>`).join('');
+carPage=0;updCarInd();document.getElementById('car-top').scrollLeft=0;
+let g=document.getElementById('main-grid');
+g.innerHTML = f.length===0 ? '<div style="grid-column:span 4;text-align:center;padding:20px;color:#888">Ничего не найдено</div>' : f.map(a=>`<div class="card" onclick="openBuy(${a.id})"><div class="img-box"><img src="${getImg(a.car_name)}" onerror="this.src='${DEF_IMG}'"></div><div class="price-tag">${money(a.price)}</div><div class="card-title">${a.car_name}</div></div>`).join('');
+}
+
+// Фильтр
+function openFilterModal() { document.getElementById('m-min').value=document.getElementById('f-min').value||'';document.getElementById('m-max').value=document.getElementById('f-max').value||'';document.getElementById('modal-filter').style.display='flex'; }
+function closeFilterModal() { document.getElementById('modal-filter').style.display='none'; }
+function applyFilter() { document.getElementById('f-min').value=document.getElementById('m-min').value;document.getElementById('f-max').value=document.getElementById('m-max').value;closeFilterModal();renderMain(); }
+
+// Покупка
+function openBuy(id) {
+let a=ads.find(x=>x.id===id);if(!a)return;buyAd=a;
+document.getElementById('m-img').src=getImg(a.car_name);document.getElementById('m-title').textContent=a.car_name;document.getElementById('m-seller').textContent=a.s_name;document.getElementById('m-stars').textContent=a.stars;document.getElementById('m-speed').textContent=a.speed;document.getElementById('m-turbo').textContent=a.turbo;document.getElementById('m-engine').textContent=a.engine;document.getElementById('m-price').textContent=money(a.price);
+let b=document.getElementById('m-buy-btn');if(a.s_id===user.id){b.textContent="Ваше";b.disabled=true;b.style.background="#ccc"}else{b.textContent="💸 Купить";b.disabled=false;b.style.background="#e31e24"}
+document.getElementById('modal-buy').style.display='flex';
+}
+function closeBuyModal() { document.getElementById('modal-buy').style.display='none'; }
+function buyCar() { if(!buyAd)return; if(user.bal<buyAd.price){toast("❌ Мало денег!");return} user.bal-=buyAd.price; /* Тут должен быть запрос к серверу на покупку */ ads=ads.filter(a=>a.id!==buyAd.id); updBal();closeBuyModal();renderMain();toast("✅ Куплено!"); }
+
+// === ПОДАЧА (ЗАПРОС К СЕРВЕРУ) ===
+function openSellMenu() {
+    showPage('page-step1');
+    let g = document.getElementById('garage-grid');
+    g.innerHTML = '<div style="text-align:center; width:100%; padding:20px; color:#888;">Загрузка машин...</div>';
+    
+    // Делаем запрос к нашему Python-серверу
+    fetch(`${API_URL}/api/my_cars?user_id=${USER_ID}`)
+        .then(res => res.json())
+        .then(data => {
+            myCars = data; // Сохраняем полученные машины
+            if(myCars.length === 0) {
+                g.innerHTML = '<div style="text-align:center; width:100%; padding:20px; color:#888;">У вас нет машин в гараже</div>';
+                return;
+            }
+            g.innerHTML = myCars.map(c => `
+                <div class="sell-card" onclick="startSell('${c.name}')">
+                    <img src="${getImg(c.name)}" onerror="this.src='${DEF_IMG}'">
+                    <div class="card-title">${c.name}</div>
+                    <div style="font-size:10px; color:#888; align-self:flex-start;">⚡ ${c.speed} км/ч · ⭐ ${c.stars}</div>
+                </div>
+            `).join('');
+        })
+        .catch(err => {
+            g.innerHTML = '<div style="text-align:center; width:100%; padding:20px; color:red;">Ошибка подключения к серверу</div>';
+            console.error(err);
+        });
+}
+
+function startSell(name) { sellCar=name;selDaysVal=1;document.querySelectorAll('.day-btn').forEach((b,i)=>{if(i===0)b.classList.add('active');else b.classList.remove('active')});updPrice(1);document.getElementById('sell-price').value='0';document.getElementById('pub-btn').classList.remove('ready');showPage('page-step2'); }
+function selDays(btn,d) { document.querySelectorAll('.day-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');selDaysVal=d;updPrice(d); }
+function updPrice(d) { let c=d*5000;document.getElementById('days-cost').textContent='+'+money(c);document.getElementById('total-cost').textContent=money(c); }
+function checkPrice() { let p=parseInt(document.getElementById('sell-price').value)||0,b=document.getElementById('pub-btn');if(p>0){b.classList.add('ready');b.disabled=false}else{b.classList.remove('ready');b.disabled=true} }
+function confirmPub() { 
+    let p=parseInt(document.getElementById('sell-price').value)||0;
+    if(p<=0)return;
+    
+    // Тут должен быть запрос к серверу для сохранения объявления в drom_ads
+    toast("✅ Объявление отправлено на сервер!");
+    showPage('page-main'); 
+}
+
+// Мои
+function openMyAds() {
+    let g=document.getElementById('my-grid'),t=document.getElementById('my-text');
+    // Для теста оставим пусто
+    t.style.display='block'; t.textContent='У вас нет объявлений'; g.innerHTML='';
+    showPage('page-my');
+}
+
+updBal();renderMain();
+</script>
+</body>
+</html>

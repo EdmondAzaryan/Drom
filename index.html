@@ -168,7 +168,10 @@ header{background:#1c1c1e;color:#fff;display:flex;justify-content:space-between;
 <div>⚙ Двиг: <b id="m-engine"></b></div>
 </div>
 <h3 style="color:#e31e24;font-size:20px;margin-bottom:15px" id="m-price">0$</h3>
-<button class="btn-t btn-red" style="width:100%;justify-content:center;padding:12px;font-size:14px" id="m-buy-btn" onclick="buyCar()">💸 Купить</button>
+<!-- Кнопка для покупки -->
+<button class="btn-t btn-red" style="width:100%;justify-content:center;padding:12px;font-size:14px;display:none;" id="m-buy-btn" onclick="buyCar()">💸 Купить</button>
+<!-- Кнопка для снятия с продажи -->
+<button class="btn-t btn-dark" style="width:100%;justify-content:center;padding:12px;font-size:14px;display:none;" id="m-remove-btn" onclick="removeMyAd()">❌ Снять с продажи</button>
 <button class="btn-t btn-dark" style="width:100%;justify-content:center;margin-top:8px;padding:12px" onclick="closeBuyModal()">Закрыть</button>
 </div>
 </div>
@@ -179,7 +182,6 @@ header{background:#1c1c1e;color:#fff;display:flex;justify-content:space-between;
 const tg = window.Telegram.WebApp;
 tg.expand();
 
-// ⚙️ НАСТРОЙКА КАРТИНОК
 const CAR_IMGS = {
     "Ferrari 296 GTB": "https://pngimg.com/uploads/ferrari/ferrari_PNG102812.png",
     "BMW M3 G80": "https://pngimg.com/uploads/bmw/bmw_PNG1701.png",
@@ -191,14 +193,15 @@ const CAR_IMGS = {
 const DEF_IMG = "https://cdn-icons-png.flaticon.com/512/3202/3202926.png";
 function getImg(name) { return CAR_IMGS[name] || DEF_IMG; }
 
-// ⚠️ ССЫЛКА НА СЕРВЕР (Если тестируешь на телефоне, замени 127.0.0.1 на IP ПК)
 const API_URL = "http://127.0.0.1:8000"; 
 const USER_ID = new URLSearchParams(window.location.search).get('uid') || tg.initDataUnsafe?.user?.id || 1;
 
 let user = { id: USER_ID, name: "Вы", bal: 5000000 };
 let allAds = []; 
+let myAdsList = []; 
 let myCars = []; 
 let buyAd = null, sellCar = null, selDaysVal = 1, hist = ['page-main'], carPage = 0;
+let modalMode = 'buy'; // 'buy' или 'my_ad'
 
 function money(a) { return a.toLocaleString('ru-RU') + '$'; }
 function toast(m) { let t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3000); }
@@ -228,7 +231,7 @@ function renderMain() {
     if(sort==='price_asc') f.sort((a,b)=>a.price-b.price); else f.sort((a,b)=>b.price-a.price);
     
     document.getElementById('car-top').innerHTML = f.map(a => `
-        <div class="card" onclick="openBuy(${a.id})">
+        <div class="card" onclick="openAdModal(${a.id}, 'buy')">
             <div class="img-box"><img src="${getImg(a.name)}" onerror="this.src='${DEF_IMG}'"></div>
             <div class="price-tag">${money(a.price)}</div>
             <div class="card-title">${a.name}</div>
@@ -239,7 +242,7 @@ function renderMain() {
     
     let g = document.getElementById('main-grid');
     g.innerHTML = f.length===0 ? '<div style="grid-column:span 4;text-align:center;padding:20px;color:#888">Объявлений пока нет</div>' : f.map(a => `
-        <div class="card" onclick="openBuy(${a.id})">
+        <div class="card" onclick="openAdModal(${a.id}, 'buy')">
             <div class="img-box"><img src="${getImg(a.name)}" onerror="this.src='${DEF_IMG}'"></div>
             <div class="price-tag">${money(a.price)}</div>
             <div class="card-title">${a.name}</div>
@@ -252,26 +255,50 @@ function openFilterModal() { document.getElementById('m-min').value=document.get
 function closeFilterModal() { document.getElementById('modal-filter').style.display='none'; }
 function applyFilter() { document.getElementById('f-min').value=document.getElementById('m-min').value;document.getElementById('f-max').value=document.getElementById('m-max').value;closeFilterModal();renderMain(); }
 
-// ПОКУПКА
-function openBuy(id) {
-    let a = allAds.find(x => x.id === id);
+// МОДАЛКА
+function openAdModal(id, mode) {
+    let a;
+    if(mode === 'buy') {
+        a = allAds.find(x => x.id === id);
+        modalMode = 'buy';
+    } else {
+        a = myAdsList.find(x => x.id === id);
+        modalMode = 'my_ad';
+    }
+    
     if(!a) return; 
     buyAd = a;
+    
     document.getElementById('m-img').src=getImg(a.name);
     document.getElementById('m-title').textContent=a.name;
-    document.getElementById('m-seller').textContent=a.seller_name;
+    document.getElementById('m-seller').textContent=a.seller_name || "Вы";
     document.getElementById('m-stars').textContent=a.stars;
     document.getElementById('m-speed').textContent=a.speed;
     document.getElementById('m-turbo').textContent=a.turbo;
     document.getElementById('m-engine').textContent=a.engine;
     document.getElementById('m-price').textContent=money(a.price);
     
-    let b = document.getElementById('m-buy-btn');
-    if(a.seller_id === user.id) { b.textContent="Ваше"; b.disabled=true; b.style.background="#ccc"; }
-    else { b.textContent="💸 Купить"; b.disabled=false; b.style.background="#e31e24"; }
+    let buyBtn = document.getElementById('m-buy-btn');
+    let removeBtn = document.getElementById('m-remove-btn');
+    
+    if(modalMode === 'my_ad') {
+        buyBtn.style.display = 'none';
+        removeBtn.style.display = 'flex';
+    } else {
+        removeBtn.style.display = 'none';
+        buyBtn.style.display = 'flex';
+        if(a.seller_id === user.id) { 
+            buyBtn.textContent="Ваше"; buyBtn.disabled=true; buyBtn.style.background="#ccc"; 
+        } else { 
+            buyBtn.textContent="💸 Купить"; buyBtn.disabled=false; buyBtn.style.background="#e31e24"; 
+        }
+    }
+    
     document.getElementById('modal-buy').style.display='flex';
 }
+
 function closeBuyModal() { document.getElementById('modal-buy').style.display='none'; }
+
 function buyCar() { toast("Покупка в разработке..."); closeBuyModal(); }
 
 // ПОДАЧА
@@ -326,7 +353,7 @@ function confirmPub() {
     });
 }
 
-// МОИ ОБЪЯВЛЕНИЯ (Только твои!)
+// МОИ ОБЪЯВЛЕНИЯ
 function openMyAds() {
     showPage('page-my');
     let g = document.getElementById('my-grid');
@@ -339,12 +366,13 @@ function openMyAds() {
     fetch(`${API_URL}/api/my_ads?user_id=${USER_ID}`)
         .then(res => res.json())
         .then(data => {
+            myAdsList = data;
             if(data.length === 0) {
                 t.textContent = 'У вас нет активных объявлений';
             } else {
                 t.style.display = 'none';
                 g.innerHTML = data.map(a => `
-                    <div class="card">
+                    <div class="card" onclick="openAdModal(${a.id}, 'my_ad')">
                         <div class="img-box"><img src="${getImg(a.name)}" onerror="this.src='${DEF_IMG}'"></div>
                         <div class="price-tag">${money(a.price)}</div>
                         <div class="card-title">${a.name}</div>
@@ -354,8 +382,32 @@ function openMyAds() {
         })
         .catch(err => {
             t.textContent = 'Ошибка загрузки';
-            console.error(err);
         });
+}
+
+// СНЯТИЕ С ПРОДАЖИ
+function removeMyAd() {
+    if(!buyAd) return;
+    
+    fetch(`${API_URL}/api/remove_ad`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: USER_ID, ad_id: buyAd.id })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if(data.status === 'success') {
+            toast("✅ Машина снята с продажи!");
+            closeBuyModal();
+            openMyAds(); // Обновляем список моих объявлений
+            loadAds();   // Обновляем главную
+        } else {
+            toast("❌ Ошибка при снятии");
+        }
+    })
+    .catch(err => {
+        toast("❌ Ошибка сервера");
+    });
 }
 
 // Запуск

@@ -6,6 +6,7 @@
 <title>Grand Auto</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
+/* Стили без изменений */
 *{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
 body{background:#eaebef;color:#333;font-size:13px;overflow-x:hidden;width:100%}
 header{background:#1c1c1e;color:#fff;display:flex;justify-content:space-between;align-items:center;padding:8px 10px;height:55px;position:sticky;top:0;z-index:100}
@@ -83,7 +84,7 @@ header{background:#1c1c1e;color:#fff;display:flex;justify-content:space-between;
 <div class="logo"><div class="logo-ic">e</div><div>grand<span>auto</span></div></div>
 </div>
 <div class="h-right">
-<div class="bal"><div class="bal-amt" id="u-bal">5 000 000$</div><div class="bal-lbl">БАЛАНС</div></div>
+<div class="bal"><div class="bal-amt" id="u-bal">...</div><div class="bal-lbl">БАЛАНС</div></div>
 <button class="btn-t btn-dark" onclick="openMyAds()">📄 Мои</button>
 <button class="btn-t btn-red" onclick="openSellMenu()">➕ Подать</button>
 </div>
@@ -168,9 +169,7 @@ header{background:#1c1c1e;color:#fff;display:flex;justify-content:space-between;
 <div>⚙ Двиг: <b id="m-engine"></b></div>
 </div>
 <h3 style="color:#e31e24;font-size:20px;margin-bottom:15px" id="m-price">0$</h3>
-<!-- Кнопка для покупки -->
 <button class="btn-t btn-red" style="width:100%;justify-content:center;padding:12px;font-size:14px;display:none;" id="m-buy-btn" onclick="buyCar()">💸 Купить</button>
-<!-- Кнопка для снятия с продажи -->
 <button class="btn-t btn-dark" style="width:100%;justify-content:center;padding:12px;font-size:14px;display:none;" id="m-remove-btn" onclick="removeMyAd()">❌ Снять с продажи</button>
 <button class="btn-t btn-dark" style="width:100%;justify-content:center;margin-top:8px;padding:12px" onclick="closeBuyModal()">Закрыть</button>
 </div>
@@ -196,25 +195,34 @@ function getImg(name) { return CAR_IMGS[name] || DEF_IMG; }
 const API_URL = "http://127.0.0.1:8000"; 
 const USER_ID = new URLSearchParams(window.location.search).get('uid') || tg.initDataUnsafe?.user?.id || 1;
 
-let user = { id: USER_ID, name: "Вы", bal: 5000000 };
 let allAds = []; 
 let myAdsList = []; 
 let myCars = []; 
 let buyAd = null, sellCar = null, selDaysVal = 1, hist = ['page-main'], carPage = 0;
-let modalMode = 'buy'; // 'buy' или 'my_ad'
+let modalMode = 'buy';
 
 function money(a) { return a.toLocaleString('ru-RU') + '$'; }
 function toast(m) { let t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3000); }
-function updBal() { document.getElementById('u-bal').textContent = money(user.bal); }
+function updBal() { 
+    // Делаем запрос, чтобы узнать реальный баланс игрока
+    fetch(`${API_URL}/api/user_balance?user_id=${USER_ID}`)
+        .then(res => res.json())
+        .then(data => {
+            if(data.balance !== undefined) {
+                document.getElementById('u-bal').textContent = money(data.balance);
+            } else {
+                document.getElementById('u-bal').textContent = "0$";
+            }
+        })
+        .catch(() => document.getElementById('u-bal').textContent = "0$");
+}
 function showPage(id) { document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); document.getElementById(id).classList.add('active'); if(hist[hist.length-1]!==id) hist.push(id); document.getElementById('h-back').style.display = id==='page-main'?'none':'block'; window.scrollTo(0,0); }
 function goBack() { if(hist.length>1){ hist.pop(); let prev=hist[hist.length-1]; document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); document.getElementById(prev).classList.add('active'); document.getElementById('h-back').style.display=prev==='page-main'?'none':'block'; } else showPage('page-main'); }
 
-// Карусель
 function scrollCar(dir) { let tr=document.getElementById('car-top'); if(dir===1){carPage=1;tr.scrollLeft=tr.scrollWidth}else{carPage=0;tr.scrollLeft=0} updCarInd(); }
 function toggleCar() { let tr=document.getElementById('car-top'); if(carPage===0){carPage=1;tr.scrollLeft=tr.scrollWidth}else{carPage=0;tr.scrollLeft=0} updCarInd(); }
 function updCarInd() { document.getElementById('car-ind').textContent=(carPage+1)+' / 2'; }
 
-// ГЛАВНАЯ
 function loadAds() {
     fetch(`${API_URL}/api/all_ads`)
         .then(res => res.json())
@@ -250,21 +258,14 @@ function renderMain() {
     `).join('');
 }
 
-// ФИЛЬТР
 function openFilterModal() { document.getElementById('m-min').value=document.getElementById('f-min').value||'';document.getElementById('m-max').value=document.getElementById('f-max').value||'';document.getElementById('modal-filter').style.display='flex'; }
 function closeFilterModal() { document.getElementById('modal-filter').style.display='none'; }
 function applyFilter() { document.getElementById('f-min').value=document.getElementById('m-min').value;document.getElementById('f-max').value=document.getElementById('m-max').value;closeFilterModal();renderMain(); }
 
-// МОДАЛКА
 function openAdModal(id, mode) {
     let a;
-    if(mode === 'buy') {
-        a = allAds.find(x => x.id === id);
-        modalMode = 'buy';
-    } else {
-        a = myAdsList.find(x => x.id === id);
-        modalMode = 'my_ad';
-    }
+    if(mode === 'buy') { a = allAds.find(x => x.id === id); modalMode = 'buy'; } 
+    else { a = myAdsList.find(x => x.id === id); modalMode = 'my_ad'; }
     
     if(!a) return; 
     buyAd = a;
@@ -287,7 +288,7 @@ function openAdModal(id, mode) {
     } else {
         removeBtn.style.display = 'none';
         buyBtn.style.display = 'flex';
-        if(a.seller_id === user.id) { 
+        if(a.seller_id == USER_ID) { 
             buyBtn.textContent="Ваше"; buyBtn.disabled=true; buyBtn.style.background="#ccc"; 
         } else { 
             buyBtn.textContent="💸 Купить"; buyBtn.disabled=false; buyBtn.style.background="#e31e24"; 
@@ -299,7 +300,27 @@ function openAdModal(id, mode) {
 
 function closeBuyModal() { document.getElementById('modal-buy').style.display='none'; }
 
-function buyCar() { toast("Покупка в разработке..."); closeBuyModal(); }
+// ПОКУПКА
+function buyCar() { 
+    if(!buyAd) return;
+    fetch(`${API_URL}/api/buy_car`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: USER_ID, ad_id: buyAd.id })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if(data.status === 'success') {
+            toast("✅ Машина куплена!");
+            closeBuyModal();
+            loadAds();
+            updBal();
+        } else {
+            toast("❌ " + (data.message || "Ошибка"));
+        }
+    })
+    .catch(err => toast("❌ Ошибка сервера"));
+}
 
 // ПОДАЧА
 function openSellMenu() {
@@ -344,16 +365,19 @@ function confirmPub() {
     })
     .then(res => res.json())
     .then(data => {
-        toast("✅ Объявление создано!");
-        showPage('page-main');
-        loadAds();
+        if(data.status === 'success') {
+            toast("✅ Объявление создано!");
+            showPage('page-main');
+            loadAds();
+            updBal(); // Обновляем баланс после списания
+        } else {
+            toast("❌ " + (data.message || "Ошибка"));
+        }
     })
-    .catch(err => {
-        toast("❌ Ошибка при создании");
-    });
+    .catch(err => toast("❌ Ошибка при создании"));
 }
 
-// МОИ ОБЪЯВЛЕНИЯ
+// МОИ
 function openMyAds() {
     showPage('page-my');
     let g = document.getElementById('my-grid');
@@ -380,12 +404,10 @@ function openMyAds() {
                 `).join('');
             }
         })
-        .catch(err => {
-            t.textContent = 'Ошибка загрузки';
-        });
+        .catch(err => t.textContent = 'Ошибка загрузки');
 }
 
-// СНЯТИЕ С ПРОДАЖИ
+// СНЯТИЕ
 function removeMyAd() {
     if(!buyAd) return;
     
@@ -399,15 +421,13 @@ function removeMyAd() {
         if(data.status === 'success') {
             toast("✅ Машина снята с продажи!");
             closeBuyModal();
-            openMyAds(); // Обновляем список моих объявлений
-            loadAds();   // Обновляем главную
+            openMyAds();
+            loadAds();
         } else {
             toast("❌ Ошибка при снятии");
         }
     })
-    .catch(err => {
-        toast("❌ Ошибка сервера");
-    });
+    .catch(err => toast("❌ Ошибка сервера"));
 }
 
 // Запуск

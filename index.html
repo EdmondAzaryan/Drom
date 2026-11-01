@@ -4,45 +4,19 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GrandPad OS 16</title>
-
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-
-body {
-  margin: 0; min-height: 100vh; width: 100%; background: #292725;
-  display: flex; align-items: center; justify-content: center;
-  font-family: Arial, sans-serif; color: white; overflow: hidden;
-}
+body { margin: 0; min-height: 100vh; width: 100%; background: #292725; display: flex; align-items: center; justify-content: center; font-family: Arial, sans-serif; color: white; overflow: hidden; }
 
 /* ПЛАНШЕТ */
-.tablet {
-  width: min(96vw, 94vh * 1.79); aspect-ratio: 1.79 / 1;
-  background: #050505; border: clamp(6px, 1vw, 14px) solid #080808;
-  border-radius: 3.5%; padding: 1.1%; position: relative;
-  box-shadow: 0 15px 50px #000b, 0 0 0 2px #555;
-}
-.camera {
-  position: absolute; top: -1.1%; left: 50%; transform: translateX(-50%);
-  width: 1.3%; aspect-ratio: 1; background: radial-gradient(circle, #345675, #101b27 65%);
-  border-radius: 50%; z-index: 5;
-}
-
-/* ЭКРАН */
-.screen {
-  width: 100%; height: 100%; overflow: hidden; border-radius: 1.5%;
-  position: relative; background: #11111f url("ic_tablet_bg_6.webp") center center / 100% 100% no-repeat;
-}
+.tablet { width: min(96vw, 94vh * 1.79); aspect-ratio: 1.79 / 1; background: #050505; border: clamp(6px, 1vw, 14px) solid #080808; border-radius: 3.5%; padding: 1.1%; position: relative; box-shadow: 0 15px 50px #000b, 0 0 0 2px #555; }
+.camera { position: absolute; top: -1.1%; left: 50%; transform: translateX(-50%); width: 1.3%; aspect-ratio: 1; background: radial-gradient(circle, #345675, #101b27 65%); border-radius: 50%; z-index: 5; }
+.screen { width: 100%; height: 100%; overflow: hidden; border-radius: 1.5%; position: relative; background: #11111f url("ic_tablet_bg_6.webp") center center / 100% 100% no-repeat; }
 
 /* ВЕРХНЯЯ ПАНЕЛЬ */
-.topbar {
-  width: 100%; height: 10%; display: flex; align-items: center;
-  justify-content: space-between; padding: 0 2.2%; position: relative;
-  font-size: clamp(10px, 1.15vw, 17px); font-weight: 600;
-}
-.clock {
-  position: absolute; left: 50%; transform: translateX(-50%);
-  white-space: nowrap; font-variant-numeric: tabular-nums;
-}
+.topbar { width: 100%; height: 10%; display: flex; align-items: center; justify-content: space-between; padding: 0 2.2%; position: relative; font-size: clamp(10px, 1.15vw, 17px); font-weight: 600; }
+.clock { position: absolute; left: 50%; transform: translateX(-50%); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .status { display: flex; align-items: center; justify-content: flex-end; gap: clamp(3px, .5vw, 7px); }
 .status-icon { height: clamp(12px, 1.5vw, 19px); width: auto; object-fit: contain; display: block; }
 
@@ -53,38 +27,18 @@ body {
 .battery-outline { z-index: 2; }
 
 /* ПРИЛОЖЕНИЯ */
-.apps {
-  height: 90%; width: 100%; display: grid;
-  grid-template-columns: repeat(6, 1fr); grid-template-rows: repeat(3, 1fr);
-  padding: 1% 3.1% 2%; column-gap: 1.4%; row-gap: 1%;
-}
-.app {
-  width: 100%; min-width: 0; display: flex; flex-direction: column;
-  align-items: center; justify-content: flex-start; gap: clamp(5px, .8vw, 12px);
-  background: transparent; border: none; padding: 0; color: white; font-family: Arial, sans-serif; cursor: pointer;
-}
-.app img {
-  width: 74%; max-width: 120px; aspect-ratio: 1; object-fit: cover;
-  border-radius: 23%; box-shadow: 0 4px 12px #0003; transition: transform .15s;
-}
+.apps { height: 90%; width: 100%; display: grid; grid-template-columns: repeat(6, 1fr); grid-template-rows: repeat(3, 1fr); padding: 1% 3.1% 2%; column-gap: 1.4%; row-gap: 1%; }
+.app { width: 100%; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: clamp(5px, .8vw, 12px); background: transparent; border: none; padding: 0; color: white; font-family: Arial, sans-serif; cursor: pointer; }
+.app img { width: 74%; max-width: 120px; aspect-ratio: 1; object-fit: cover; border-radius: 23%; box-shadow: 0 4px 12px #0003; transition: transform .15s; }
 .app:active img { transform: scale(.93); }
 .app-name { width: 100%; text-align: center; font-size: clamp(9px, 1.05vw, 16px); line-height: 1.15; font-weight: 400; overflow-wrap: anywhere; }
 
 /* УВЕДОМЛЕНИЕ */
-.toast {
-  display: none; position: absolute; left: 50%; bottom: 3%; transform: translateX(-50%);
-  padding: 10px 18px; border-radius: 12px; background: #252536ee; font-size: 13px; white-space: nowrap; z-index: 10;
-}
+.toast { display: none; position: absolute; left: 50%; bottom: 3%; transform: translateX(-50%); padding: 10px 18px; border-radius: 12px; background: #252536ee; font-size: 13px; white-space: nowrap; z-index: 10; }
 
 /* ЗАКРЫТИЕ */
-.close {
-  position: fixed; top: 2%; right: 2%; width: clamp(42px, 5vw, 65px); aspect-ratio: 1;
-  border: none; border-radius: 50%; background: white; color: #111; font-size: clamp(25px, 3vw, 38px); cursor: pointer; z-index: 10;
-}
-.reopen {
-  display: none; position: fixed; bottom: 20px; padding: 12px 25px;
-  background: #171725; color: white; border: 1px solid #555; border-radius: 30px; cursor: pointer;
-}
+.close { position: fixed; top: 2%; right: 2%; width: clamp(42px, 5vw, 65px); aspect-ratio: 1; border: none; border-radius: 50%; background: white; color: #111; font-size: clamp(25px, 3vw, 38px); cursor: pointer; z-index: 10; }
+.reopen { display: none; position: fixed; bottom: 20px; padding: 12px 25px; background: #171725; color: white; border: 1px solid #555; border-radius: 30px; cursor: pointer; }
 
 /* МОБИЛЬНАЯ АДАПТАЦИЯ */
 @media(max-width: 650px) {
@@ -95,46 +49,14 @@ body {
   .topbar { font-size: clamp(8px, 1.8vw, 12px); }
 }
 
-/* =========================================
-   ПОЛНОЭКРАННОЕ ОКНО GRAND AUTO
-   ========================================= */
-#grandAutoFullscreen {
-  display: none;
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  width: 100vw; height: 100vh;
-  background: #eaebef;
-  z-index: 99999;
-  flex-direction: column;
-}
-#grandAutoFullscreen.active {
-  display: flex;
-}
-.ga-header {
-  height: 50px;
-  background: #1c1c1e;
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 15px;
-  font-size: 16px;
-  font-weight: bold;
-}
-.ga-back {
-  background: none; border: none; color: #3b99fc;
-  font-weight: bold; font-size: 16px; cursor: pointer;
-}
-#grandAutoFrame {
-  flex: 1;
-  width: 100%;
-  height: calc(100% - 50px);
-  border: none;
-  background: #eaebef;
-}
+/* ПОЛНОЭКРАННОЕ ОКНО GRAND AUTO */
+#grandAutoFullscreen { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; width: 100vw; height: 100vh; background: #eaebef; z-index: 99999; flex-direction: column; }
+#grandAutoFullscreen.active { display: flex; }
+.ga-header { height: 50px; background: #1c1c1e; color: #fff; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; font-size: 16px; font-weight: bold; }
+.ga-back { background: none; border: none; color: #3b99fc; font-weight: bold; font-size: 16px; cursor: pointer; }
+#grandAutoFrame { flex: 1; width: 100%; height: calc(100% - 50px); border: none; background: #eaebef; }
 </style>
 </head>
-
 <body>
 
 <div class="tablet" id="tablet">
@@ -155,7 +77,6 @@ body {
     </div>
 
     <div class="apps">
-      <!-- Твой список приложений... -->
       <button class="app" onclick="openApp('Телефон')"><img src="ic_app_phone.webp" alt=""><span class="app-name">Телефон</span></button>
       <button class="app" onclick="openApp('Сообщения')"><img src="ic_app_messages.webp" alt=""><span class="app-name">Сообщения</span></button>
       <button class="app" onclick="openApp('Контакты')"><img src="ic_app_contacts.webp" alt=""><span class="app-name">Контакты</span></button>
@@ -172,7 +93,7 @@ body {
 
       <button class="app" onclick="openApp('Taxi Driver')"><img src="ic_app_taxi_driver.webp" alt=""><span class="app-name">Taxi Driver</span></button>
       
-      <!-- ▼▼▼ КНОПКА GRAND AUTO ▼▼▼ -->
+      <!-- КНОПКА GRAND AUTO -->
       <button class="app" onclick="openGrandAuto()">
         <img src="ic_app_grand_auto.webp" alt="Grand Auto">
         <span class="app-name">Grand Auto</span>
@@ -183,27 +104,24 @@ body {
       <button class="app" onclick="openApp('Рыбак')"><img src="ic_app_fisherman.webp" alt=""><span class="app-name">Рыбак</span></button>
       <button class="app" onclick="openApp('Серый Импорт')"><img src="ic_app_containers.webp" alt=""><span class="app-name">Серый Импорт</span></button>
     </div>
-
     <div class="toast" id="toast"></div>
   </div>
 </div>
 
-<!-- КНОПКИ ПЛАНШЕТА -->
 <button class="close" id="close" onclick="closeTablet()">×</button>
 <button class="reopen" id="reopen" onclick="openTablet()">Открыть планшет</button>
 
-<!-- ▼▼▼ САМО ОКНО GRAND AUTO (ВЫНЕСЕНО ИЗ ПЛАНШЕТА НА ВЕСЬ ЭКРАН) ▼▼▼ -->
 <div id="grandAutoFullscreen">
   <div class="ga-header">
     <button class="ga-back" onclick="closeGrandAuto()">‹ Назад</button>
     <span>Grand Auto</span>
     <span style="width: 60px;"></span>
   </div>
-  <!-- Если drom.html лежит рядом, браузер его подгрузит -->
   <iframe id="grandAutoFrame" src="drom.html" frameborder="0"></iframe>
 </div>
 
 <script>
+// Открытие приложений (заглушка)
 function openApp(name) {
   const toast = document.getElementById("toast");
   toast.textContent = name;
@@ -212,7 +130,17 @@ function openApp(name) {
   window.toastTimer = setTimeout(() => { toast.style.display = "none"; }, 1500);
 }
 
+// Открытие Grand Auto
 function openGrandAuto() {
+  const tg = window.Telegram.WebApp;
+  // Берем ID из ТГ, если нет - из URL
+  const userId = (tg.initDataUnsafe && tg.initDataUnsafe.user) ? tg.initDataUnsafe.user.id : (new URLSearchParams(window.location.search).get('uid') || "");
+  
+  const frame = document.getElementById("grandAutoFrame");
+  
+  // Подставляем ID в ссылку для drom.html
+  frame.src = "drom.html?uid=" + userId + "&v=" + Date.now();
+  
   document.getElementById("grandAutoFullscreen").classList.add("active");
 }
 
